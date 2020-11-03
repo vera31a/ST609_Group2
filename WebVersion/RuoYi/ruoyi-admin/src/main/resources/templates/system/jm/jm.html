@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+	<th:block th:include="include :: header('muti-functional encrypt')" />
+	<th:block th:include="include :: select2-css" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-user-add" class="form-horizontal">
+           <div class="col-md-6">
+		    <div class="form-group">
+		        <label class="col-sm-3 control-label">Select encryption and decryption method：</label>
+					<div class="col-sm-9">
+						<select class="form-control" id="test" name="">
+							<option value="1">please Select</option>
+							<option value="AES">AES</option>
+							<option value="DES">DES</option>
+							<option value="RSA">RSA</option>
+							<option value="ECC">ECC</option>
+						</select>
+					</div>
+				</div>
+				
+			<div class="form-group" id = "key" style="display: none;">
+		        <label class="col-sm-3 control-label">encryption Key：</label>
+		        <div class="col-sm-9">
+		            <textarea   rows="2" cols="50" type="text" id="mKey"  name="" class="form-control" placeholder="Type the key"></textarea>
+		        </div>
+		    </div>
+		    
+		    <div class="form-group" id = "g" style="display: none;">
+		        <label class="col-sm-3 control-label">Public key：</label>
+		        <div class="col-sm-9">
+		            <textarea    rows="3" cols="50" type="text" id="gKey"  name="" class="form-control" placeholder="Public key"></textarea>
+		        </div>
+		    </div>
+		     <div class="form-group" id = "s" style="display: none;">
+		        <label class="col-sm-3 control-label">Private key：</label>
+		        <div class="col-sm-9">
+		            <textarea     rows="3" cols="50" type="text" id="sKey"  name="" class="form-control" placeholder="Private key"></textarea>
+		        </div>
+		    </div>
+		    
+		    <div class="form-group">
+		        <label class="col-sm-3 control-label">encryption or decryption text：</label>
+		        <div class="col-sm-9">
+		            <textarea   rows="15" cols="50" id="jia" type="text" name="" class="form-control" placeholder="Please type something"></textarea>
+		        </div>
+		    </div>
+		    <div class="form-group">
+		        <label class="col-sm-3 control-label">encryption or decryption result：</label>
+		        <div class="col-sm-9">
+		            <textarea type="text" rows="15" cols="50" id="jie" readonly="readonly" name="" class="form-control" placeholder="Output"></textarea>
+		        </div>
+		    </div>
+		</div>
+		<div class="col-md-6"></div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10" style="margin-left: 20%;">
+            <button type="button" class="btn btn-sm btn-primary" onclick="jia()"><i class="fa fa-check"></i>encryption</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="jiemi()"><i class="fa fa-reply-all"></i>decrypt</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: select2-js" />
+	<script>
+	    var prefix = ctx + "system/user";
+	
+	    
+	    $("#test").change(function(){
+	    	var vs = $('select  option:selected').val();  
+	    	if(vs == "1"){
+	    		
+	    		$("#key").hide();
+	    		$("#s").hide();
+	    		$("#g").hide();
+	    		layer.alert("请选择加密类型");
+	    	}else if(vs == "AES" || vs == "DES"){
+	    		$("#s").hide();
+	    		$("#g").hide();
+	    		$("#key").show();
+	    		
+	    	}
+	    	if(vs == "RSA" || vs == "ECC"){
+	    		$("#s").show();
+	    		$("#g").show();
+	    		$("#key").hide();
+	    		
+	    	}
+	    
+	    });
+	    //解密
+	    function jiemi(){
+	    	var vs = $('select  option:selected').val();  
+	    	if(vs == "1"){
+	    		alert("Select encryption and decryption method");
+	    	}
+	    	var type = vs;
+	    	var jia = $("#jia").val();
+	    	var mKey = $("#mKey").val();
+	    	
+	    	if(type == "AES" ){
+				if(mKey.length != 16){
+					layer.msg('Please input 16 bits Key', {
+						  btn: ['yes'] //按钮
+						})
+						return;
+				}
+			
+	    	}
+	    	if(type == "DES" ){
+				if(mKey.length != 64){
+					layer.msg('Please input 64 bits Key', {
+						  btn: ['yes'] //按钮
+						})
+						return;
+				}
+			
+	    	}
+	    	
+	    	
+	    	var obj = {};
+	    	obj.type=type;
+	    	obj.jie=jia;
+	    	obj.mKey=mKey;
+	    	obj.sKey=$("#sKey").val();
+	    	
+	    	 $.ajax({
+	             //请求方式
+	             type : "POST",
+	             //请求的媒体类型
+	             contentType: "application/json;charset=UTF-8",
+	             //请求地址
+	             url : "../system/jm/jiemi",
+	             //数据，json字符串
+	             data : JSON.stringify(obj),
+	             //请求成功
+	             success : function(r) {
+	            	 if(r.code == "0"){
+							if(type == "AES" || type == "DES" ){
+								$("#jie").val(r.data)
+							}
+							if(type == "RSA" || type == "ECC" ){
+								$("#jie").val(r.data)
+							}
+							layer.msg('success', {
+								  btn: ['yes'] //按钮
+								})
+						}else{
+							layer.msg('error', {
+								  btn: ['yes'] //按钮
+								})
+						}
+	             },
+	             //请求失败，包含具体的错误信息
+	             error : function(e){
+	                 console.log(e.status);
+	                 console.log(e.responseText);
+	             }
+	         });
+	    	
+	    	/* $.post('../system/jm/jiemi?type='+type+"&jie="+jia+"&mKey="+mKey+"&sKey="+$("#sKey").val(), function(r) {
+					if(r.code == "0"){
+						if(type == "AES" || type == "DES" ){
+							$("#jie").val(r.data)
+						}
+						if(type == "RSA" || type == "ECC" ){
+							$("#jie").val(r.data.data)
+						
+				    		$("#sKey").val(r.data.sKey)
+				    		$("#gKey").val(r.data.gKey)
+						}
+						
+					}else{
+						layer.alert(r.msg);
+					}
+	    	
+	    	}); */
+	    	
+	    }
+	    //加密
+	    function jia(){
+	    	var vs = $('select  option:selected').val();  
+	    	if(vs == "1"){
+	    		alert("Select encryption and decryption method");
+	    		return;
+	    	}
+	    	var type = vs;
+	    	var jia = $("#jia").val();
+	    	var mKey = $("#mKey").val();
+	    	if(type == "AES"  ){
+				if(mKey.length != 16){
+					layer.msg('Please input 16 bits Key', {
+						  btn: ['yes'] //按钮
+						})
+						
+						return;
+				}
+			
+	    	}
+	    	
+	      	if(type == "DES" ){
+				if(mKey.length != 64){
+					layer.msg('Please input 64 bits Key', {
+						  btn: ['yes'] //按钮
+						})
+						return;
+				}
+			
+	    	}
+	    	
+	    	
+	    	$.post('../system/jm/jiami?type='+type+"&jia="+jia+"&mKey="+mKey, function(r) {
+					if(r.code == "0"){
+						if(type == "AES" || type == "DES" ){
+							$("#jie").val(r.data)
+								layer.msg('success', {
+								  btn: ['yes'] //按钮
+								})
+						}
+						if(type == "RSA" || type == "ECC" ){
+							$("#jie").val(r.data.data)
+				    		$("#sKey").val(r.data.sKey)
+				    		$("#gKey").val(r.data.gKey)
+				    		//layer.alert("verification success");
+							
+					/* 	 layer.msg('Need verification?', {
+								  btn: ['yes','no'] //按钮
+								,yes: function(){
+									  layer.msg('verification：ture', {icon: 1});
+									  }
+									  ,btn2: function(){
+									    layer.closeAll();
+									  })  */
+								
+									  layer.msg('Need verification?', {
+									  time: 0 //不自动关闭
+									  ,btn: ['yes','no']
+									  ,yes: function(index){
+										  layer.msg('verification：ture', {icon: 1});
+									  }
+									});
+									  
+				    		/* layer.open({
+				    			  title: 'message'
+				    			  ,content: 'Need verification?'
+				    			});      */
+						}
+						
+					}else{
+						
+						layer.msg('error', {
+							  btn: ['yes'] //按钮
+							})
+					}
+	    	
+	    	});
+	    	
+	    }
+       
+    </script>
+</body>
+</html>
